@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: app1-multi-region
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+
+  generators:
+  - list:
+      elements:
+      - region: mumbai
+        destinationName: in-cluster
+        namespace: app1-mumbai-ns
+      - region: nvirginia
+        destinationName: i-0c92e3e416fa5b923@uma-nvirginia.us-east-1.eksctl.io
+        namespace: app1-nvirginia-ns
+
+  template:
+    metadata:
+      name: "app1-{{.region}}"
+    spec:
+      project: default
+
+      source:
+        repoURL: https://github.com/Chinthaparthy-UmasankarReddy/app1-config1.git
+        targetRevision: main
+        path: "{{.region}}/manifests"
+
+      destination:
+        name: "{{.destinationName}}"
+        namespace: "{{.namespace}}"
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
